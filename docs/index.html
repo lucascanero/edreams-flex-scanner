@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>eDreams Flex Scanner — cheapest flights across flexible dates</title>
+<meta name="description" content="A Chrome extension that sweeps every date combination on eDreams and ranks the cheapest flights by number of nights." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --void: #0a0f1c;
+    --void-2: #0d1424;
+    --panel: #111a2e;
+    --panel-2: #16223a;
+    --line: #22314c;
+    --text: #dbe2ee;
+    --haze: #6b7a94;
+    --amber: #ffb000;
+    --jade: #3ecf8e;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+    --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--void);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  a { color: inherit; }
+
+  ::selection { background: var(--amber); color: #14100a; }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(10,15,28,0.82);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-weight: 700; letter-spacing: 0.14em; font-size: 13px; }
+  .brand .glyph { color: var(--amber); font-size: 16px; }
+  .topbar-links { display: flex; gap: 22px; align-items: center; font-family: var(--mono); font-size: 12px; letter-spacing: 0.05em; }
+  .topbar-links a { color: var(--haze); text-decoration: none; transition: color .15s; }
+  .topbar-links a:hover { color: var(--text); }
+  .topbar-links a.ghhl:hover { color: var(--amber); }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 84px 0 64px; position: relative; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.28em;
+    text-transform: uppercase; color: var(--amber); margin-bottom: 22px;
+  }
+  .hero h1 {
+    font-size: clamp(38px, 6.5vw, 76px);
+    font-weight: 800; line-height: 1.02; letter-spacing: -0.02em;
+    max-width: 15ch;
+  }
+  .hero h1 .thin { color: var(--haze); font-weight: 500; }
+  .hero p.lead {
+    margin-top: 26px; max-width: 54ch; font-size: 18px; color: #aeb9cc;
+  }
+  .cta-row { margin-top: 38px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--sans); font-weight: 600; font-size: 15px;
+    padding: 13px 22px; border-radius: 10px; text-decoration: none;
+    border: 1px solid transparent; cursor: pointer; transition: transform .12s, filter .12s, border-color .15s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--amber); color: #14100a; }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-primary .store { font-family: var(--mono); font-size: 11px; opacity: .7; }
+  .btn-ghost { border-color: var(--line); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--haze); }
+  .cta-note { font-family: var(--mono); font-size: 11px; color: var(--haze); letter-spacing: .04em; }
+
+  /* ---------- split-flap board ---------- */
+  .board {
+    margin-top: 60px;
+    background: linear-gradient(180deg, var(--void-2), var(--panel));
+    border: 1px solid var(--line); border-radius: 14px;
+    padding: 22px; box-shadow: 0 30px 80px -40px rgba(0,0,0,.8);
+  }
+  .board-head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--haze);
+    padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--line);
+  }
+  .board-head .live { display: inline-flex; align-items: center; gap: 7px; color: var(--jade); }
+  .board-head .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--jade); animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+  .board-cols {
+    display: grid; grid-template-columns: 1.4fr 1fr 1fr 0.7fr 1.1fr;
+    gap: 12px; font-family: var(--mono); font-size: 10px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--haze); padding: 0 4px 10px;
+  }
+  .board-row {
+    display: grid; grid-template-columns: 1.4fr 1fr 1fr 0.7fr 1.1fr;
+    gap: 12px; padding: 8px 4px; align-items: center;
+    border-top: 1px solid rgba(34,49,76,.5);
+  }
+  .flaps { display: inline-flex; gap: 3px; }
+  .flap {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 22px; height: 30px; padding: 0 5px;
+    background: #05080f; color: var(--text);
+    font-family: var(--mono); font-weight: 700; font-size: 16px;
+    border-radius: 4px; border: 1px solid #1a2337;
+    box-shadow: inset 0 -1px 0 rgba(255,255,255,.04), inset 0 1px 0 rgba(0,0,0,.5);
+    position: relative;
+  }
+  .flap::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0,0,0,.55); }
+  .flap.amber { color: var(--amber); }
+  .flap.jade { color: var(--jade); }
+  .board-row .price { justify-self: end; }
+
+  /* ---------- section scaffolding ---------- */
+  section { padding: 88px 0; border-top: 1px solid var(--line); }
+  .sec-eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .22em;
+    text-transform: uppercase; color: var(--amber); margin-bottom: 14px;
+  }
+  .sec-title { font-size: clamp(26px, 3.6vw, 40px); font-weight: 700; letter-spacing: -0.01em; max-width: 20ch; }
+  .sec-intro { margin-top: 16px; color: #aeb9cc; max-width: 58ch; font-size: 17px; }
+
+  /* ---------- pipeline (a real sequence → numbers are honest) ---------- */
+  .pipe { margin-top: 52px; display: grid; gap: 2px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .step {
+    display: grid; grid-template-columns: 64px 1fr; gap: 20px;
+    padding: 26px 24px; background: var(--panel);
+    transition: background .15s;
+  }
+  .step:hover { background: var(--panel-2); }
+  .step-n { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--amber); letter-spacing: .1em; padding-top: 2px; }
+  .step h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+  .step p { color: var(--haze); font-size: 15px; }
+  .step p code { font-family: var(--mono); color: #b9c4d6; background: var(--void-2); padding: 1px 6px; border-radius: 4px; font-size: 13px; }
+
+  /* ---------- feature grid ---------- */
+  .grid { margin-top: 52px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 24px; transition: transform .12s, border-color .15s;
+  }
+  .card:hover { transform: translateY(-3px); border-color: #2c3d5c; }
+  .card .tag { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); }
+  .card h3 { font-size: 17px; font-weight: 600; margin: 12px 0 8px; }
+  .card p { color: var(--haze); font-size: 14px; }
+
+  /* ---------- install ---------- */
+  .install-box {
+    margin-top: 44px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 14px; padding: 34px;
+  }
+  .install-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+  .install-col h3 { font-size: 15px; font-family: var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--text); margin-bottom: 18px; }
+  .install-col.soon h3 { color: var(--haze); }
+  ol.steps { list-style: none; counter-reset: s; display: grid; gap: 14px; }
+  ol.steps li { counter-increment: s; position: relative; padding-left: 34px; font-size: 15px; color: #c4cddc; }
+  ol.steps li::before {
+    content: counter(s); position: absolute; left: 0; top: -1px;
+    width: 22px; height: 22px; border-radius: 6px; background: var(--void-2);
+    border: 1px solid var(--line); color: var(--amber);
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  ol.steps li code { font-family: var(--mono); color: #b9c4d6; background: var(--void-2); padding: 1px 6px; border-radius: 4px; font-size: 13px; }
+  .soon-badge { display: inline-block; font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--void); background: var(--haze); padding: 3px 8px; border-radius: 5px; margin-left: 8px; vertical-align: middle; }
+  .install-col.soon p { color: var(--haze); font-size: 14px; }
+
+  /* ---------- disclaimer + footer ---------- */
+  .note {
+    margin-top: 44px; border-left: 2px solid var(--amber);
+    padding: 14px 18px; background: var(--void-2); border-radius: 0 8px 8px 0;
+    font-size: 14px; color: #aeb9cc; max-width: 68ch;
+  }
+  footer { border-top: 1px solid var(--line); padding: 40px 0; }
+  .foot-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-family: var(--mono); font-size: 12px; color: var(--haze); letter-spacing: .05em; }
+  .foot-inner a { color: var(--haze); text-decoration: none; }
+  .foot-inner a:hover { color: var(--amber); }
+
+  @media (max-width: 760px) {
+    .grid { grid-template-columns: 1fr; }
+    .install-grid { grid-template-columns: 1fr; }
+    .topbar-links a:not(.ghhl) { display: none; }
+    .board-cols, .board-row { grid-template-columns: 1.3fr 1fr 0.9fr; }
+    .board-cols span:nth-child(4), .board-cols span:nth-child(5),
+    .board-row > *:nth-child(4), .board-row > *:nth-child(5) { display: none; }
+    .board-row .price { display: inline-flex !important; justify-self: start; }
+    .board-cols span.price-col { display: inline-block !important; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dot { animation: none; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand"><span class="glyph">✈</span> FLEX&nbsp;SCANNER</div>
+    <nav class="topbar-links">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#install">Install</a>
+      <a class="ghhl" href="https://github.com/lucascanero/edreams-flex-scanner">GitHub ↗</a>
+    </nav>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Chrome extension · Manifest V3</div>
+    <h1>Every date. <span class="thin">One board.</span> The cheapest flight.</h1>
+    <p class="lead">
+      Give it a departure window and a range of nights. It sweeps every
+      round-trip combination on eDreams, reads the price off each page, and
+      lines them up cheapest-first.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" id="store-btn" href="#install">
+        Install <span class="store">· from source</span>
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/lucascanero/edreams-flex-scanner">View source</a>
+      <span class="cta-note">v1.0.0 · free · open source</span>
+    </div>
+
+    <!-- signature: split-flap departures board -->
+    <div class="board" aria-hidden="true">
+      <div class="board-head">
+        <span>Flex Sweep · MAD → TYO</span>
+        <span class="live"><span class="dot"></span> scanning 4 / 305</span>
+      </div>
+      <div class="board-cols">
+        <span>Route</span><span>Out</span><span>Back</span><span>Nts</span><span class="price-col">Price</span>
+      </div>
+      <div id="board-body"></div>
+    </div>
+  </div>
+</header>
+
+<section id="how">
+  <div class="wrap">
+    <div class="sec-eyebrow">The sweep</div>
+    <h2 class="sec-title">A search engine that drives a real browser.</h2>
+    <p class="sec-intro">
+      eDreams has no public API and blocks direct requests. So instead of faking
+      one, the extension does what you'd do by hand — just tirelessly, and in
+      order.
+    </p>
+
+    <div class="pipe">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div>
+          <h3>Generate the combinations</h3>
+          <p>Every departure day in your window is paired with every nights value in your range. A 20-day window × 4 nights options is 80 searches.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div>
+          <h3>Open each search in a real tab</h3>
+          <p>One at a time, with a randomised <code>8–15 s</code> delay between them — human-paced, so eDreams keeps serving real prices.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div>
+          <h3>Read the Cheapest price off the page</h3>
+          <p>Anchored on the page's own <code>Cheapest</code> tab, confirmed across a few readings so the number is the final one, not the optimistic first draft.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div>
+          <h3>Rank, save, export</h3>
+          <p>Results land in a sortable table, cheapest-first, saved to history, exportable as CSV.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="sec-eyebrow">What's inside</div>
+    <h2 class="sec-title">Built for accuracy, not just speed.</h2>
+
+    <div class="grid">
+      <div class="card">
+        <span class="tag">Dates</span>
+        <h3>Flexible sweep</h3>
+        <p>Departure window × nights range. Every valid round-trip, generated automatically.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Precision</span>
+        <h3>Reads the real price</h3>
+        <p>Anchored on the Cheapest tab and confirmed across readings — no optimistic placeholder, no guessed selector.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Timing</span>
+        <h3>Self-correcting ETA</h3>
+        <p>Time remaining is measured from real per-search timings, so it adjusts as the sweep goes.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Safety</span>
+        <h3>Anti-bot aware</h3>
+        <p>Sequential tabs, randomised delays, and an automatic pause if a CAPTCHA appears.</p>
+      </div>
+      <div class="card">
+        <span class="tag">History</span>
+        <h3>Every scan saved</h3>
+        <p>Reopen any past sweep with its full results. Export any of them to CSV.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Details</span>
+        <h3>Passengers &amp; languages</h3>
+        <p>Adults, children, infants. Interface in English or Portuguese, switchable anytime.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="sec-eyebrow">Get it</div>
+    <h2 class="sec-title">Two ways to install.</h2>
+
+    <div class="install-box">
+      <div class="install-grid">
+        <div class="install-col">
+          <h3>From source — works today</h3>
+          <ol class="steps">
+            <li>Download the repo from <a href="https://github.com/lucascanero/edreams-flex-scanner" style="color:var(--amber);text-decoration:none">GitHub</a>.</li>
+            <li>Open <code>chrome://extensions</code> and enable Developer mode.</li>
+            <li>Click <strong>Load unpacked</strong> and select the folder.</li>
+            <li>Click the icon to open the side panel.</li>
+          </ol>
+        </div>
+        <div class="install-col soon">
+          <h3>Chrome Web Store <span class="soon-badge">soon</span></h3>
+          <p>
+            The store listing is pending review. Until it's live, the
+            <em>from source</em> method on the left is the way in — it takes
+            about a minute and gives you the same extension.
+          </p>
+          <a class="btn btn-ghost" href="https://github.com/lucascanero/edreams-flex-scanner" style="margin-top:18px">Get it from GitHub</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      A personal tool for personal use. It automates a browser to read publicly
+      visible prices; it doesn't bypass logins or touch private data. On routes
+      with Prime pricing, the number shown is the discounted Prime price — if
+      you're not a member, checkout will be higher. Respect eDreams' terms of
+      service.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-inner">
+    <span>eDreams Flex Scanner · v1.0.0 · MIT</span>
+    <span>Built by <a href="https://github.com/lucascanero">Lucas Canero</a></span>
+  </div>
+</footer>
+
+<script>
+  // When the extension is published, set this to the Web Store URL and the
+  // hero button + install column flip to a live "Add to Chrome" automatically.
+  const STORE_URL = ""; // e.g. "https://chromewebstore.google.com/detail/…"
+  if (STORE_URL) {
+    const btn = document.getElementById("store-btn");
+    btn.href = STORE_URL;
+    btn.innerHTML = 'Add to Chrome <span class="store">· Web Store</span>';
+  }
+
+  // Split-flap board: animate a few result rows flipping into place.
+  (function () {
+    const rows = [
+      { route: "MAD·TYO", out: "03-01", back: "03-14", nts: "13", price: "817", cls: "jade" },
+      { route: "MAD·TYO", out: "03-02", back: "03-16", nts: "14", price: "834", cls: "" },
+      { route: "MAD·TYO", out: "03-01", back: "03-15", nts: "14", price: "861", cls: "" },
+      { route: "MAD·TYO", out: "03-03", back: "03-18", nts: "15", price: "889", cls: "" }
+    ];
+    const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·-. ";
+    const body = document.getElementById("board-body");
+    const reduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+    function flapsFor(text, cls) {
+      const wrap = document.createElement("span");
+      wrap.className = "flaps";
+      [...text].forEach((ch) => {
+        const f = document.createElement("span");
+        f.className = "flap" + (cls ? " " + cls : "");
+        f.textContent = reduce ? ch : " ";
+        f.dataset.target = ch;
+        wrap.appendChild(f);
+      });
+      return wrap;
+    }
+
+    rows.forEach((r) => {
+      const row = document.createElement("div");
+      row.className = "board-row";
+      const route = document.createElement("span"); route.appendChild(flapsFor(r.route, ""));
+      const out = document.createElement("span"); out.appendChild(flapsFor(r.out, ""));
+      const back = document.createElement("span"); back.appendChild(flapsFor(r.back, ""));
+      const nts = document.createElement("span"); nts.appendChild(flapsFor(r.nts, ""));
+      const price = document.createElement("span"); price.className = "price"; price.appendChild(flapsFor("€" + r.price, r.cls));
+      row.append(route, out, back, nts, price);
+      body.appendChild(row);
+    });
+
+    if (reduce) return;
+
+    // flip animation: cycle each flap through random chars to its target
+    const flaps = [...document.querySelectorAll(".flap")];
+    flaps.forEach((f, i) => {
+      const target = f.dataset.target;
+      let ticks = 6 + Math.floor(Math.random() * 8) + Math.floor(i / 4);
+      const iv = setInterval(() => {
+        if (ticks <= 0) { f.textContent = target; clearInterval(iv); return; }
+        f.textContent = CHARS[Math.floor(Math.random() * CHARS.length)];
+        ticks--;
+      }, 55);
+    });
+  })();
+</script>
+
+</body>
+</html>

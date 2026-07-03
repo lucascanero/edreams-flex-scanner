@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>eDreams Flex Scanner</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="brand-glyph">✈</span>
+      <h1>FLEX&nbsp;SCANNER</h1>
+    </div>
+    <div class="header-right">
+      <select id="lang-select" aria-label="Language">
+        <option value="en">EN</option>
+        <option value="pt">PT</option>
+      </select>
+      <span id="status-pill" class="pill idle" data-i18n="status_idle">idle</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- CONFIG -->
+    <section id="config" class="card">
+      <div class="row">
+        <label data-i18n="from">Origin
+          <input id="from" type="text" placeholder="LIS" maxlength="3" />
+        </label>
+        <label data-i18n="to">Destination
+          <input id="to" type="text" placeholder="NRT" maxlength="3" />
+        </label>
+      </div>
+      <div class="row">
+        <label data-i18n="dep_from">Departure — from
+          <input id="dep-start" type="date" />
+        </label>
+        <label data-i18n="dep_to">to
+          <input id="dep-end" type="date" />
+        </label>
+      </div>
+      <div class="row">
+        <label data-i18n="nights_min">Nights — min
+          <input id="nights-min" type="number" min="1" max="60" value="5" />
+        </label>
+        <label data-i18n="nights_max">max
+          <input id="nights-max" type="number" min="1" max="60" value="8" />
+        </label>
+      </div>
+      <div class="row row-3">
+        <label data-i18n="adults">Adults
+          <input id="pax-adults" type="number" min="1" max="9" value="1" />
+        </label>
+        <label data-i18n="children">Children
+          <input id="pax-children" type="number" min="0" max="9" value="0" />
+        </label>
+        <label data-i18n="infants">Infants
+          <input id="pax-infants" type="number" min="0" max="9" value="0" />
+        </label>
+      </div>
+
+      <details>
+        <summary data-i18n="advanced">Advanced</summary>
+        <label data-i18n="domain">Domain
+          <select id="domain">
+            <option value="www.edreams.pt">edreams.pt</option>
+            <option value="www.edreams.es">edreams.es</option>
+            <option value="www.edreams.com" selected>edreams.com</option>
+          </select>
+        </label>
+        <label data-i18n="url_template">URL template <span class="hint" data-i18n="url_tokens">tokens: {domain} {from} {to} {dep} {ret} {pax}</span>
+          <textarea id="url-template" rows="3"></textarea>
+        </label>
+        <div class="row">
+          <label data-i18n="delay_min">Delay min (s)
+            <input id="delay-min" type="number" min="3" max="120" value="8" />
+          </label>
+          <label data-i18n="delay_max">Delay max (s)
+            <input id="delay-max" type="number" min="3" max="180" value="15" />
+          </label>
+        </div>
+        <div class="row">
+          <label data-i18n="timeout">Timeout/search (s)
+            <input id="hard-timeout" type="number" min="20" max="180" value="60" />
+          </label>
+          <label data-i18n="stabilization">Stabilization (s) <span class="hint" data-i18n="stabilization_hint">price fixed for N s before accepting</span>
+            <input id="stable-secs" type="number" min="1" max="60" value="5" />
+          </label>
+        </div>
+        <label data-i18n="confirms">Price confirmations <span class="hint" data-i18n="confirms_hint">jump after N equal readings (lower = faster, riskier)</span>
+          <input id="confirms" type="number" min="1" max="10" value="3" />
+        </label>
+        <label class="check"><input id="keep-tabs" type="checkbox" /> <span data-i18n="keep_tabs">keep tabs open</span></label>
+        <label data-i18n="price_floor">Minimum plausible price (€) <span class="hint" data-i18n="price_floor_hint">ignores captures below — filters Prime/baggage/insurance</span>
+          <input id="price-floor" type="number" min="0" max="20000" value="150" />
+        </label>
+      </details>
+
+      <p id="combo-count" class="combo-count"></p>
+
+      <div class="actions">
+        <button id="btn-test" class="ghost" data-i18n="btn_test">Test 1 search</button>
+        <button id="btn-start" class="primary" data-i18n="btn_start">Start scan</button>
+      </div>
+    </section>
+
+    <!-- PROGRESS -->
+    <section id="progress" class="card hidden">
+      <div class="progress-head">
+        <span id="progress-label">0 / 0</span>
+        <span id="progress-eta" class="mono"></span>
+      </div>
+      <div class="progress-sub"><span id="progress-current" class="mono"></span></div>
+      <div class="bar"><div id="bar-fill"></div></div>
+      <div class="actions">
+        <button id="btn-pause" class="ghost" data-i18n="btn_pause">Pause</button>
+        <button id="btn-stop" class="danger" data-i18n="btn_stop">Cancel</button>
+      </div>
+      <p id="capture-info" class="hint mono"></p>
+      <details id="debug-details">
+        <summary data-i18n="debug">Capture debug</summary>
+        <pre id="debug-log" class="debug-log"></pre>
+      </details>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="results-card" class="card hidden">
+      <div class="results-head">
+        <h2><span data-i18n="results">Results</span> <span id="results-meta" class="hint"></span></h2>
+        <div>
+          <select id="filter-nights"><option value="" data-i18n="all_nights">all nights</option></select>
+          <button id="btn-csv" class="ghost small">CSV</button>
+        </div>
+      </div>
+      <table id="results">
+        <thead>
+          <tr>
+            <th data-k="price" class="sortable">€ ▾</th>
+            <th data-k="dep" class="sortable" data-i18n="th_dep">out</th>
+            <th data-k="ret" class="sortable" data-i18n="th_ret">back</th>
+            <th data-k="nights" class="sortable" data-i18n="th_nts">nts</th>
+            <th data-i18n="th_carrier">airline</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </section>
+
+    <!-- HISTORY -->
+    <section id="history-card" class="card hidden">
+      <div class="results-head">
+        <h2 data-i18n="history">History</h2>
+        <button id="btn-clear-history" class="ghost small" data-i18n="clear">clear</button>
+      </div>
+      <div id="history-list"></div>
+    </section>
+
+    <p id="warnings" class="warn hidden"></p>
+  </main>
+
+  <footer id="app-footer">
+    <span id="app-version">v1.0.0</span>
+    <span class="sep">·</span>
+    <a href="https://github.com/lucascanero" target="_blank" rel="noopener noreferrer">Lucas Canero</a>
+  </footer>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

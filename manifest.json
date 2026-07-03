@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "eDreams Flex Scanner",
+  "version": "1.0.0",
+  "description": "Varredura de datas flexíveis na eDreams: interceta os resultados de pesquisa e encontra os voos mais baratos por número de noites.",
+  "permissions": ["tabs", "storage", "sidePanel"],
+  "host_permissions": [
+    "https://*.edreams.pt/*",
+    "https://*.edreams.com/*",
+    "https://*.edreams.es/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "action": { "default_title": "eDreams Flex Scanner" },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.edreams.pt/*",
+        "https://*.edreams.com/*",
+        "https://*.edreams.es/*"
+      ],
+      "js": ["interceptor.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://*.edreams.pt/*",
+        "https://*.edreams.com/*",
+        "https://*.edreams.es/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "world": "ISOLATED"
+    }
+  ]
+}
