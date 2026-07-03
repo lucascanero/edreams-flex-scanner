@@ -44,24 +44,24 @@ browser session.
 
 ## Install
 
-### From source (works today)
+### From source
 
 1. Download or clone this repository.
 2. Open `chrome://extensions` and turn on **Developer mode**.
 3. Click **Load unpacked** and select the project folder.
 4. Click the extension icon to open the side panel.
-
+   
 ### Chrome Web Store
 
 Not yet published. The store listing is pending; until then, use the
 *from source* method above.
 
-## First run — calibration
+## First run
 
 The URL template and the page structure aren't guaranteed, so the first scan
 may need a quick check:
 
-1. Fill in origin, destination, and one date, then click **Test 1 search**.
+1. Fill in origin, destination, and one date, then click **Search**.
 2. If the tab opens the correct results page, you're set. If not, run a manual
    search on eDreams, copy the URL, and adapt the **URL template** under
    *Advanced* using the tokens `{domain} {from} {to} {dep} {ret} {pax}`.
