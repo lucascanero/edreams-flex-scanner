@@ -18,7 +18,7 @@ const I18N = {
     confirms: 'Price confirmations', confirms_hint: 'jump after N equal readings (lower = faster, riskier)',
     price_floor: 'Minimum plausible price (€)',
     price_floor_hint: 'ignores captures below — filters Prime/baggage/insurance',
-    btn_test: 'Test 1 search', btn_start: 'Start scan', btn_pause: 'Pause', btn_stop: 'Cancel',
+    btn_start: 'Start scan', btn_pause: 'Pause', btn_stop: 'Cancel',
     debug: 'Capture debug', results: 'Results', all_nights: 'all nights', th_dep: 'out',
     th_ret: 'back', th_nts: 'nts', th_carrier: 'airline', history: 'History', clear: 'clear',
     status_idle: 'idle', status_scanning: 'scanning', status_paused: 'paused',
@@ -44,7 +44,7 @@ const I18N = {
     confirms: 'Confirmações de preço', confirms_hint: 'salta após N leituras iguais (menor = mais rápido, mais arriscado)',
     price_floor: 'Preço mínimo plausível (€)',
     price_floor_hint: 'ignora capturas abaixo — filtra Prime/bagagens/seguros',
-    btn_test: 'Testar 1 pesquisa', btn_start: 'Iniciar varredura', btn_pause: 'Pausar',
+    btn_start: 'Iniciar varredura', btn_pause: 'Pausar',
     btn_stop: 'Cancelar', debug: 'Debug de capturas', results: 'Resultados',
     all_nights: 'todas as noites', th_dep: 'ida', th_ret: 'volta', th_nts: 'nts',
     th_carrier: 'cia', history: 'Histórico', clear: 'limpar', status_idle: 'parado',
@@ -467,7 +467,6 @@ async function runQueue(cfg) {
   setStatus('running', 'status_scanning');
   $('progress').classList.remove('hidden');
   $('btn-start').disabled = true;
-  $('btn-test').disabled = true;
 
   S.comboTimes = [];
   while (S.idx < S.queue.length && !S.stopRequested) {
@@ -495,12 +494,10 @@ async function runQueue(cfg) {
 
   S.running = false;
   $('btn-start').disabled = false;
-  $('btn-test').disabled = false;
   setStatus('idle', S.stopRequested ? 'status_cancelled' : 'status_done');
   renderResults();
 
   // Arquivar no histórico apenas varreduras completas com resultados
-  // (não os testes de 1 combo, que passam keepTabs=true e queue.length===1).
   if (!S.stopRequested && S.queue.length > 1 && S.results.some((r) => r.price != null)) {
     await archiveToHistory(cfg);
   }
@@ -602,21 +599,6 @@ $('btn-start').addEventListener('click', async () => {
   S.results = [];
   S.paused = false;
   runQueue(cfg);
-});
-
-$('btn-test').addEventListener('click', async () => {
-  const cfg = readSettings();
-  const errs = validate(cfg);
-  if (errs.length) { warn(t('fix') + errs.join(' · ')); return; }
-  $('warnings').classList.add('hidden');
-  saveForm();
-
-  S.queue = buildQueue(cfg).slice(0, 1);
-  S.idx = 0;
-  S.results = [];
-  S.paused = false;
-  // no teste, manter a tab aberta para inspeção manual
-  runQueue({ ...cfg, keepTabs: true });
 });
 
 $('btn-pause').addEventListener('click', () => {

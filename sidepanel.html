@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>eDreams Flex Scanner</title>
   <link rel="stylesheet" href="sidepanel.css" />
 </head>
+
 <body>
   <header>
     <div class="brand">
@@ -27,13 +29,15 @@
       <div class="row">
         <label data-i18n="from">Origin
           <div class="combo">
-            <input id="from" type="text" placeholder="LIS · Lisbon" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" />
+            <input id="from" type="text" placeholder="LIS · Lisbon" autocomplete="off" role="combobox"
+              aria-autocomplete="list" aria-expanded="false" />
             <div class="combo-list" id="from-list" role="listbox"></div>
           </div>
         </label>
         <label data-i18n="to">Destination
           <div class="combo">
-            <input id="to" type="text" placeholder="NRT · Tokyo" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" />
+            <input id="to" type="text" placeholder="NRT · Tokyo" autocomplete="off" role="combobox"
+              aria-autocomplete="list" aria-expanded="false" />
             <div class="combo-list" id="to-list" role="listbox"></div>
           </div>
         </label>
@@ -75,30 +79,35 @@
             <option value="www.edreams.com" selected>edreams.com</option>
           </select>
         </label>
-        <label data-i18n="url_template">URL template <span class="hint" data-i18n="url_tokens">tokens: {domain} {from} {to} {dep} {ret} {pax}</span>
+        <label data-i18n="url_template">URL template <span class="hint" data-i18n="url_tokens">tokens: {domain} {from}
+            {to} {dep} {ret} {pax}</span>
           <textarea id="url-template" rows="3"></textarea>
         </label>
         <div class="row">
           <label data-i18n="delay_min">Delay min (s)
-            <input id="delay-min" type="number" min="3" max="120" value="8" />
+            <input id="delay-min" type="number" min="3" max="120" value="1" />
           </label>
           <label data-i18n="delay_max">Delay max (s)
-            <input id="delay-max" type="number" min="3" max="180" value="15" />
+            <input id="delay-max" type="number" min="3" max="180" value="2" />
           </label>
         </div>
         <div class="row">
           <label data-i18n="timeout">Timeout/search (s)
             <input id="hard-timeout" type="number" min="20" max="180" value="60" />
           </label>
-          <label data-i18n="stabilization">Stabilization (s) <span class="hint" data-i18n="stabilization_hint">price fixed for N s before accepting</span>
-            <input id="stable-secs" type="number" min="1" max="60" value="5" />
+          <label data-i18n="stabilization">Stabilization (s) <span class="hint" data-i18n="stabilization_hint">price
+              fixed for N s before accepting</span>
+            <input id="stable-secs" type="number" min="1" max="60" value="1" />
           </label>
         </div>
-        <label data-i18n="confirms">Price confirmations <span class="hint" data-i18n="confirms_hint">jump after N equal readings (lower = faster, riskier)</span>
+        <label data-i18n="confirms">Price confirmations <span class="hint" data-i18n="confirms_hint">jump after N equal
+            readings (lower = faster, riskier)</span>
           <input id="confirms" type="number" min="1" max="10" value="3" />
         </label>
-        <label class="check"><input id="keep-tabs" type="checkbox" /> <span data-i18n="keep_tabs">keep tabs open</span></label>
-        <label data-i18n="price_floor">Minimum plausible price (€) <span class="hint" data-i18n="price_floor_hint">ignores captures below — filters Prime/baggage/insurance</span>
+        <label class="check"><input id="keep-tabs" type="checkbox" /> <span data-i18n="keep_tabs">keep tabs
+            open</span></label>
+        <label data-i18n="price_floor">Minimum plausible price (€) <span class="hint"
+            data-i18n="price_floor_hint">ignores captures below — filters Prime/baggage/insurance</span>
           <input id="price-floor" type="number" min="0" max="20000" value="150" />
         </label>
       </details>
@@ -106,7 +115,6 @@
       <p id="combo-count" class="combo-count"></p>
 
       <div class="actions">
-        <button id="btn-test" class="ghost" data-i18n="btn_test">Test 1 search</button>
         <button id="btn-start" class="primary" data-i18n="btn_start">Start scan</button>
       </div>
     </section>
@@ -118,7 +126,9 @@
         <span id="progress-eta" class="mono"></span>
       </div>
       <div class="progress-sub"><span id="progress-current" class="mono"></span></div>
-      <div class="bar"><div id="bar-fill"></div></div>
+      <div class="bar">
+        <div id="bar-fill"></div>
+      </div>
       <div class="actions">
         <button id="btn-pause" class="ghost" data-i18n="btn_pause">Pause</button>
         <button id="btn-stop" class="danger" data-i18n="btn_stop">Cancel</button>
@@ -135,7 +145,9 @@
       <div class="results-head">
         <h2><span data-i18n="results">Results</span> <span id="results-meta" class="hint"></span></h2>
         <div>
-          <select id="filter-nights"><option value="" data-i18n="all_nights">all nights</option></select>
+          <select id="filter-nights">
+            <option value="" data-i18n="all_nights">all nights</option>
+          </select>
           <button id="btn-csv" class="ghost small">CSV</button>
         </div>
       </div>
@@ -176,4 +188,5 @@
   <script src="metros.js"></script>
   <script src="sidepanel.js"></script>
 </body>
+
 </html>
