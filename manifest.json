@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "eDreams Flex Scanner",
   "version": "1.0.0",
-  "description": "Varredura de datas flexíveis na eDreams: interceta os resultados de pesquisa e encontra os voos mais baratos por número de noites.",
+  "description": "Flexible date scan on eDreams: search results and finds the cheapest flights based on the number of nights.",
   "permissions": ["tabs", "storage", "sidePanel"],
   "host_permissions": [
     "https://*.edreams.pt/*",
