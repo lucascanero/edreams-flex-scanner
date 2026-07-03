@@ -95,21 +95,9 @@
           <label data-i18n="timeout">Timeout/search (s)
             <input id="hard-timeout" type="number" min="20" max="180" value="60" />
           </label>
-          <label data-i18n="stabilization">Stabilization (s) <span class="hint" data-i18n="stabilization_hint">price
-              fixed for N s before accepting</span>
-            <input id="stable-secs" type="number" min="0" max="60" value="0" />
-          </label>
         </div>
-        <label data-i18n="confirms">Price confirmations <span class="hint" data-i18n="confirms_hint">jump after N equal
-            readings (lower = faster, riskier)</span>
-          <input id="confirms" type="number" min="1" max="10" value="1" />
-        </label>
         <label class="check"><input id="keep-tabs" type="checkbox" /> <span data-i18n="keep_tabs">keep tabs
             open</span></label>
-        <label data-i18n="price_floor">Minimum plausible price (€) <span class="hint"
-            data-i18n="price_floor_hint">ignores captures below — filters Prime/baggage/insurance</span>
-          <input id="price-floor" type="number" min="0" max="20000" value="150" />
-        </label>
       </details>
 
       <p id="combo-count" class="combo-count"></p>
@@ -133,11 +121,6 @@
         <button id="btn-pause" class="ghost" data-i18n="btn_pause">Pause</button>
         <button id="btn-stop" class="danger" data-i18n="btn_stop">Cancel</button>
       </div>
-      <p id="capture-info" class="hint mono"></p>
-      <details id="debug-details">
-        <summary data-i18n="debug">Capture debug</summary>
-        <pre id="debug-log" class="debug-log"></pre>
-      </details>
     </section>
 
     <!-- RESULTS -->
@@ -158,7 +141,6 @@
             <th data-k="dep" class="sortable" data-i18n="th_dep">out</th>
             <th data-k="ret" class="sortable" data-i18n="th_ret">back</th>
             <th data-k="nights" class="sortable" data-i18n="th_nts">nts</th>
-            <th data-i18n="th_carrier">airline</th>
             <th></th>
           </tr>
         </thead>

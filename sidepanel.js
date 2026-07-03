@@ -13,14 +13,10 @@ const I18N = {
     nights_min: 'Nights — min', nights_max: 'max', adults: 'Adults', children: 'Children',
     infants: 'Infants', advanced: 'Advanced', domain: 'Domain', url_template: 'URL template',
     url_tokens: 'tokens: {domain} {from} {to} {dep} {ret} {pax}', delay_min: 'Delay min (s)',
-    delay_max: 'Delay max (s)', timeout: 'Timeout/search (s)', stabilization: 'Stabilization (s)',
-    stabilization_hint: 'price fixed for N s before accepting', keep_tabs: 'keep tabs open',
-    confirms: 'Price confirmations', confirms_hint: 'jump after N equal readings (lower = faster, riskier)',
-    price_floor: 'Minimum plausible price (€)',
-    price_floor_hint: 'ignores captures below — filters Prime/baggage/insurance',
+    delay_max: 'Delay max (s)', timeout: 'Timeout/search (s)', keep_tabs: 'keep tabs open',
     btn_start: 'Start scan', btn_pause: 'Pause', btn_stop: 'Cancel',
-    debug: 'Capture debug', results: 'Results', all_nights: 'all nights', th_dep: 'out',
-    th_ret: 'back', th_nts: 'nts', th_carrier: 'airline', history: 'History', clear: 'clear',
+    results: 'Results', all_nights: 'all nights', th_dep: 'out',
+    th_ret: 'back', th_nts: 'nts', history: 'History', clear: 'clear',
     status_idle: 'idle', status_scanning: 'scanning', status_paused: 'paused',
     status_blocked: 'anti-bot', status_done: 'done', status_cancelled: 'cancelled',
     btn_resume: 'Resume',
@@ -39,15 +35,11 @@ const I18N = {
     nights_min: 'Noites — mín', nights_max: 'máx', adults: 'Adultos', children: 'Crianças',
     infants: 'Bebés', advanced: 'Avançado', domain: 'Domínio', url_template: 'Template de URL',
     url_tokens: 'tokens: {domain} {from} {to} {dep} {ret} {pax}', delay_min: 'Delay mín (s)',
-    delay_max: 'Delay máx (s)', timeout: 'Timeout/pesquisa (s)', stabilization: 'Estabilização (s)',
-    stabilization_hint: 'preço fixo por N s antes de aceitar', keep_tabs: 'manter tabs abertas',
-    confirms: 'Confirmações de preço', confirms_hint: 'salta após N leituras iguais (menor = mais rápido, mais arriscado)',
-    price_floor: 'Preço mínimo plausível (€)',
-    price_floor_hint: 'ignora capturas abaixo — filtra Prime/bagagens/seguros',
+    delay_max: 'Delay máx (s)', timeout: 'Timeout/pesquisa (s)', keep_tabs: 'manter tabs abertas',
     btn_start: 'Iniciar varredura', btn_pause: 'Pausar',
-    btn_stop: 'Cancelar', debug: 'Debug de capturas', results: 'Resultados',
+    btn_stop: 'Cancelar', results: 'Resultados',
     all_nights: 'todas as noites', th_dep: 'ida', th_ret: 'volta', th_nts: 'nts',
-    th_carrier: 'cia', history: 'Histórico', clear: 'limpar', status_idle: 'parado',
+    history: 'Histórico', clear: 'limpar', status_idle: 'parado',
     status_scanning: 'a varrer', status_paused: 'pausado', status_blocked: 'anti-bot',
     status_done: 'concluído', status_cancelled: 'cancelado', btn_resume: 'Retomar',
     combos: (n, min) => `${n} combinações · ~${min} min`,
@@ -114,8 +106,7 @@ const S = {
   paused: false,
   stopRequested: false,
   currentTabId: null,
-  results: [],      // [{dep,ret,nights,price,carrier,segments,url,source}]
-  captures: [],     // capturas da pesquisa corrente
+  results: [],      // [{dep,ret,nights,price,url,source}]
   comboTimes: [],   // tempos reais por combo, para ETA (média móvel)
   sortKey: 'price',
   sortAsc: true
@@ -152,9 +143,7 @@ function readSettings() {
     delayMin: Math.max(0, parseInt($('delay-min').value, 10) || 0),
     delayMax: Math.max(0, parseInt($('delay-max').value, 10) || 0),
     hardTimeout: (parseInt($('hard-timeout').value, 10) || 60) * 1000,
-    stableMs: Math.max(0, (parseInt($('stable-secs').value, 10) || 0) * 1000),
     keepTabs: $('keep-tabs').checked,
-    priceFloor: Math.max(0, parseInt($('price-floor').value, 10) || 0),
     adults: Math.max(1, parseInt($('pax-adults').value, 10) || 1),
     children: Math.max(0, parseInt($('pax-children').value, 10) || 0),
     infants: Math.max(0, parseInt($('pax-infants').value, 10) || 0)
@@ -285,7 +274,7 @@ async function loadHistoryEntry(i) {
     from: c.from, to: c.to, 'dep-start': c.depStart, 'dep-end': c.depEnd,
     'nights-min': c.nightsMin, 'nights-max': c.nightsMax,
     'pax-adults': c.adults, 'pax-children': c.children, 'pax-infants': c.infants,
-    domain: c.domain, 'price-floor': c.priceFloor
+    domain: c.domain
   };
   for (const [id, v] of Object.entries(map)) {
     const el = $(id);
@@ -321,13 +310,11 @@ function renderResults() {
   const best = Math.min(...rows.map((r) => r.price));
   for (const r of rows) {
     const tr = document.createElement('tr');
-    const stops = r.segments != null ? ` · ${r.segments} seg` : '';
     tr.innerHTML = `
       <td class="price ${r.price === best ? 'best' : ''}" title="fonte: ${r.source}">${r.price.toFixed(0)}</td>
       <td>${r.dep.slice(5)}</td>
       <td>${r.ret.slice(5)}</td>
       <td>${r.nights}</td>
-      <td title="${(r.carrier || '') + stops + ' · fonte: ' + r.source}">${(r.carrier || '—').slice(0, 10)}</td>
       <td><a href="#" data-url="${encodeURIComponent(r.url)}" title="abrir pesquisa">↗</a></td>`;
     body.appendChild(tr);
   }
@@ -346,66 +333,25 @@ function renderResults() {
   sel.value = current;
 }
 
-// ---------------------------------------------------------------- capturas
+// ---------------------------------------------------------------- mensagens
 
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (!msg || !S.running) return;
   if (sender.tab?.id !== S.currentTabId) return;
 
-  if (msg.type === 'edfs:capture') {
-    S.captures.push(msg);
-    debugLog(msg);
-  }
   if (msg.type === 'edfs:cheapest') {
     S.cheapestPush = msg;
-    $('capture-info').textContent = `Cheapest: ${msg.price.toFixed(0)}€ (${msg.strategy})`;
   }
   if (msg.type === 'edfs:blocked') {
     S.blockedFlag = true;
   }
 });
 
-function debugLog(cap) {
-  const combo = S.queue[S.idx];
-  const lines = [`── ${combo ? combo.dep + '→' + combo.ret : '?'} @ ${cap.url.slice(0, 100)}`];
-  if (cap.summaryPair) {
-    lines.push(`   PAR tab: min=${cap.summaryPair.min} max=${cap.summaryPair.max}`);
-  }
-  lines.push(`   candidatos: ${(cap.candidates || []).map((c) => c.price.toFixed(0) + (c.carrier ? '/' + c.carrier : '')).join(', ')}`);
-  for (const l of cap.listsDebug || []) {
-    lines.push(`   lista score=${l.score} n=${l.size} min=${l.min.toFixed(0)} max=${l.max.toFixed(0)} var=${l.variance} carriers=${l.carrierRatio} keys=[${l.keys.join(',')}]`);
-  }
-  const el = $('debug-log');
-  el.textContent = (lines.join('\n') + '\n' + el.textContent).slice(0, 12000);
-}
-
-function bestOfCaptures(floor) {
-  // 1ª preferência: par [price,type] — é o par Prime/normal da tab "Mais
-  // barato" vindo da rede; o mínimo É o valor da tab.
-  let pairMin = null;
-  for (const cap of S.captures) {
-    const p = cap.summaryPair;
-    if (p && p.min >= floor && (pairMin === null || p.min < pairMin)) pairMin = p.min;
-  }
-  if (pairMin !== null) return { price: pairMin, source: 'rede/par' };
-
-  // 2ª: mínimo da lista de itinerários (preço sem desconto)
-  let best = null;
-  for (const cap of S.captures) {
-    for (const c of cap.candidates) {
-      if (c.price < floor) continue;
-      if (!best || c.price < best.price) best = { ...c, source: 'rede' };
-    }
-  }
-  return best;
-}
-
-async function readCheapestTab(tabId, floor) {
+async function readCheapestTab(tabId) {
   try {
     const resp = await chrome.tabs.sendMessage(tabId, { type: 'edfs:domScan' });
     if (resp?.blocked) S.blockedFlag = true;
-    const valid = (resp?.prices || []).filter((p) => p >= floor);
-    if (valid.length) return { price: valid[0], strategy: resp.strategy };
+    if (typeof resp?.price === 'number') return resp.price;
   } catch { /* tab ainda a carregar */ }
   return null;
 }
@@ -413,45 +359,33 @@ async function readCheapestTab(tabId, floor) {
 // ---------------------------------------------------------------- motor
 
 async function runCombo(combo, cfg) {
-  S.captures = [];
   S.blockedFlag = false;
   S.cheapestPush = null;
 
   const tab = await chrome.tabs.create({ url: combo.url, active: false });
   S.currentTabId = tab.id;
 
-  // MODELO PUSH: o content script monitoriza a página e empurra o valor da
-  // secção Cheapest quando estável (estabilização vive lá, não aqui). O painel
-  // só espera pela mensagem, até ao hard timeout.
+  // MODELO PUSH: o content script espera pelo valor da secção Cheapest e
+  // empurra-o assim que estabiliza. O painel só espera pela mensagem (até ao
+  // hard timeout) e segue imediatamente para a próxima pesquisa.
   const t0 = Date.now();
   while (Date.now() - t0 < cfg.hardTimeout) {
-    if (S.stopRequested || S.blockedFlag) break;
-    if (S.cheapestPush && S.cheapestPush.price >= cfg.priceFloor) break;
+    if (S.stopRequested || S.blockedFlag || S.cheapestPush) break;
     await sleep(300);
   }
 
   let best = null;
-  if (S.cheapestPush && S.cheapestPush.price >= cfg.priceFloor) {
-    best = { price: S.cheapestPush.price, source: `cheapest/${S.cheapestPush.strategy}` };
+  if (S.cheapestPush) {
+    best = { price: S.cheapestPush.price, source: 'cheapest' };
   } else if (!S.stopRequested) {
     // última tentativa: leitura on-demand direta
-    const read = await readCheapestTab(tab.id, cfg.priceFloor);
-    if (read) {
-      best = { price: read.price, source: 'cheapest/ondemand' };
-    } else {
-      const net = bestOfCaptures(cfg.priceFloor);
-      if (net) best = { price: net.price, source: net.source };
-    }
+    const price = await readCheapestTab(tab.id);
+    if (price !== null) best = { price, source: 'ondemand' };
   }
-
-  // carrier vem sempre da rede (a tab Cheapest não o tem)
-  const net = bestOfCaptures(cfg.priceFloor);
 
   S.results.push({
     dep: combo.dep, ret: combo.ret, nights: combo.nights,
     price: best?.price ?? null,
-    carrier: net?.carrier ?? null,
-    segments: net?.segments ?? null,
     source: best?.source ?? 'nada',
     url: combo.url
   });
@@ -568,7 +502,7 @@ async function restore() {
 function saveForm() {
   const ids = ['from', 'to', 'dep-start', 'dep-end', 'nights-min', 'nights-max',
     'pax-adults', 'pax-children', 'pax-infants',
-    'domain', 'url-template', 'delay-min', 'delay-max', 'hard-timeout', 'stable-secs', 'confirms', 'keep-tabs', 'price-floor'];
+    'domain', 'url-template', 'delay-min', 'delay-max', 'hard-timeout', 'keep-tabs'];
   const savedForm = {};
   for (const id of ids) {
     const el = $(id);
@@ -582,9 +516,9 @@ function saveForm() {
 // ---------------------------------------------------------------- CSV
 
 function exportCsv() {
-  const rows = [['dep', 'ret', 'noites', 'preco', 'companhia', 'segmentos', 'fonte', 'url']];
+  const rows = [['dep', 'ret', 'noites', 'preco', 'fonte', 'url']];
   for (const r of S.results) {
-    rows.push([r.dep, r.ret, r.nights, r.price ?? '', r.carrier ?? '', r.segments ?? '', r.source, r.url]);
+    rows.push([r.dep, r.ret, r.nights, r.price ?? '', r.source, r.url]);
   }
   const csv = rows.map((r) => r.map((c) => `"${String(c).replaceAll('"', '""')}"`).join(',')).join('\n');
   const a = document.createElement('a');
