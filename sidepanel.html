@@ -26,10 +26,16 @@
     <section id="config" class="card">
       <div class="row">
         <label data-i18n="from">Origin
-          <input id="from" type="text" placeholder="LIS" maxlength="3" />
+          <div class="combo">
+            <input id="from" type="text" placeholder="LIS · Lisbon" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" />
+            <div class="combo-list" id="from-list" role="listbox"></div>
+          </div>
         </label>
         <label data-i18n="to">Destination
-          <input id="to" type="text" placeholder="NRT" maxlength="3" />
+          <div class="combo">
+            <input id="to" type="text" placeholder="NRT · Tokyo" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" />
+            <div class="combo-list" id="to-list" role="listbox"></div>
+          </div>
         </label>
       </div>
       <div class="row">
@@ -166,6 +172,8 @@
     <a href="https://github.com/lucascanero" target="_blank" rel="noopener noreferrer">Lucas Canero</a>
   </footer>
 
+  <script src="airports.js"></script>
+  <script src="metros.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>

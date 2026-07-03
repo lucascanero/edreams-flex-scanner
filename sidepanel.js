@@ -28,6 +28,7 @@ const I18N = {
     eta: (dur) => `~${dur} remaining`,
     results_meta: (n, best) => `${n} combos · best ${best}€`,
     no_prices: 'no prices captured', nights_opt: (n) => `${n} nights`,
+    no_airport: 'no airport found', all_airports: 'all airports',
     fix: 'Fix: ', blocked_warn: 'Possible anti-bot block detected. Scan paused — open eDreams manually, solve the CAPTCHA and resume.',
     err_from: 'origin: 3-letter IATA code', err_to: 'destination: 3-letter IATA code',
     err_dates: 'incomplete date range', err_dates_order: 'start date > end date',
@@ -53,6 +54,7 @@ const I18N = {
     eta: (dur) => `~${dur} restantes`,
     results_meta: (n, best) => `${n} combos · melhor ${best}€`,
     no_prices: 'sem preços capturados', nights_opt: (n) => `${n} noites`,
+    no_airport: 'nenhum aeroporto encontrado', all_airports: 'todos os aeroportos',
     fix: 'Corrige: ', blocked_warn: 'Possível bloqueio anti-bot detetado. Varredura pausada — abre a eDreams manualmente, resolve o CAPTCHA e retoma.',
     err_from: 'origem: código IATA de 3 letras', err_to: 'destino: código IATA de 3 letras',
     err_dates: 'range de datas incompleto', err_dates_order: 'data inicial > data final',
@@ -121,10 +123,19 @@ const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); r
 const rand = (min, max) => min + Math.random() * (max - min);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+function iataOf(id) {
+  const el = $(id);
+  // preferir o código escolhido no dropdown; senão, extrair 3 letras do texto
+  const chosen = el.dataset.iata;
+  if (chosen && /^[A-Z]{3}$/.test(chosen)) return chosen;
+  const m = (el.value || '').toUpperCase().match(/\b([A-Z]{3})\b/);
+  return m ? m[1] : (el.value || '').trim().toUpperCase();
+}
+
 function readSettings() {
   return {
-    from: $('from').value.trim().toUpperCase(),
-    to: $('to').value.trim().toUpperCase(),
+    from: iataOf('from'),
+    to: iataOf('to'),
     depStart: $('dep-start').value,
     depEnd: $('dep-end').value,
     nightsMin: parseInt($('nights-min').value, 10),
@@ -530,10 +541,13 @@ async function restore() {
   applyLang(initialLang);
   if (savedForm) {
     for (const [id, v] of Object.entries(savedForm)) {
+      if (id.startsWith('__')) continue; // metadados, tratados abaixo
       const el = $(id);
       if (!el) continue;
       if (el.type === 'checkbox') el.checked = v; else el.value = v;
     }
+    if (savedForm.__iata_from) $('from').dataset.iata = savedForm.__iata_from;
+    if (savedForm.__iata_to) $('to').dataset.iata = savedForm.__iata_to;
   }
   if (!$('url-template').value) $('url-template').value = DEFAULT_TEMPLATE;
   if (lastScan?.results?.length) {
@@ -554,6 +568,8 @@ function saveForm() {
     const el = $(id);
     savedForm[id] = el.type === 'checkbox' ? el.checked : el.value;
   }
+  savedForm.__iata_from = $('from').dataset.iata || '';
+  savedForm.__iata_to = $('to').dataset.iata || '';
   chrome.storage.local.set({ savedForm });
 }
 
@@ -661,6 +677,130 @@ try {
   const v = chrome.runtime.getManifest().version;
   if (v) $('app-version').textContent = `v${v}`;
 } catch { /* fora do contexto de extensão */ }
+
+// ---------------------------------------------------------------- airport combobox
+
+function setupAirportCombo(inputId, listId) {
+  const input = $(inputId);
+  const list = $(listId);
+  const AIRPORTS = window.EDFS_AIRPORTS || [];
+  let activeIdx = -1;
+  let current = [];
+
+  const METROS = window.EDFS_METROS || {};
+
+  // Constrói entradas metropolitanas ("all airports") que batem com a query.
+  // Formato de retorno alinhado com aeroportos mas com flag metro:true.
+  function metroMatches(q) {
+    const out = [];
+    for (const [code, m] of Object.entries(METROS)) {
+      const city = m.city.toUpperCase();
+      if (code === q || code.startsWith(q) || city.startsWith(q) || city.includes(q)) {
+        out.push({ metro: true, code, city: m.city, country: m.country, airports: m.airports });
+      }
+    }
+    return out;
+  }
+
+  function search(q) {
+    q = q.trim().toUpperCase();
+    if (!q) return [];
+    const starts = [];
+    const contains = [];
+    for (const a of AIRPORTS) {
+      const iata = a[0];
+      const city = a[1].toUpperCase();
+      const alias = (a[4] || '').toUpperCase();
+      if (iata === q) { starts.unshift(a); continue; }
+      if (iata.startsWith(q) || city.startsWith(q) || alias.startsWith(q)) starts.push(a);
+      else if (city.includes(q) || alias.includes(q) || a[3].toUpperCase().includes(q)) contains.push(a);
+      if (starts.length + contains.length >= 40) break;
+    }
+    // metros primeiro (a opção "todos os aeroportos" no topo, como o eDreams)
+    return [...metroMatches(q), ...starts, ...contains].slice(0, 8);
+  }
+
+  function render(items) {
+    current = items;
+    activeIdx = -1;
+    if (!items.length) {
+      list.innerHTML = `<div class="combo-empty">${t('no_airport')}</div>`;
+      list.classList.add('open');
+      input.setAttribute('aria-expanded', 'true');
+      return;
+    }
+    list.innerHTML = items.map((a, i) => {
+      if (a.metro) {
+        return `<div class="combo-opt metro" role="option" data-i="${i}" data-iata="${a.code}">
+          <span class="iata">${a.code}</span>
+          <span class="city">${a.city} <em>${t('all_airports')}</em></span>
+          <span class="country">${a.airports.join(' ')}</span>
+        </div>`;
+      }
+      return `<div class="combo-opt" role="option" data-i="${i}" data-iata="${a[0]}">
+        <span class="iata">${a[0]}</span>
+        <span class="city">${a[1]}</span>
+        <span class="country">${a[2]}</span>
+      </div>`;
+    }).join('');
+    list.classList.add('open');
+    input.setAttribute('aria-expanded', 'true');
+  }
+
+  function close() {
+    list.classList.remove('open');
+    input.setAttribute('aria-expanded', 'false');
+    activeIdx = -1;
+  }
+
+  function choose(a) {
+    if (a.metro) {
+      input.value = `${a.code} · ${a.city} (${t('all_airports')})`;
+      input.dataset.iata = a.code;
+    } else {
+      input.value = `${a[0]} · ${a[1]}`;
+      input.dataset.iata = a[0];
+    }
+    close();
+    updateComboCount();
+    saveForm();
+  }
+
+  input.addEventListener('input', () => {
+    input.dataset.iata = ''; // texto editado à mão invalida a escolha anterior
+    const items = search(input.value);
+    if (input.value.trim()) render(items); else close();
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (!list.classList.contains('open')) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, current.length - 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); }
+    else if (e.key === 'Enter') {
+      if (activeIdx >= 0 && current[activeIdx]) { e.preventDefault(); choose(current[activeIdx]); }
+      return;
+    } else if (e.key === 'Escape') { close(); return; }
+    else return;
+    [...list.querySelectorAll('.combo-opt')].forEach((el, i) =>
+      el.classList.toggle('active', i === activeIdx));
+    const act = list.querySelector('.combo-opt.active');
+    if (act) act.scrollIntoView({ block: 'nearest' });
+  });
+
+  list.addEventListener('mousedown', (e) => {
+    const opt = e.target.closest('.combo-opt');
+    if (!opt) return;
+    e.preventDefault();
+    choose(current[parseInt(opt.dataset.i, 10)]);
+  });
+
+  input.addEventListener('blur', () => setTimeout(close, 120));
+}
+
+// ---------------------------------------------------------------- init
+
+setupAirportCombo('from', 'from-list');
+setupAirportCombo('to', 'to-list');
 
 restore();
 renderHistory();
