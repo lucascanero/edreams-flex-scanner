@@ -85,10 +85,10 @@
         </label>
         <div class="row">
           <label data-i18n="delay_min">Delay min (s)
-            <input id="delay-min" type="number" min="3" max="120" value="1" />
+            <input id="delay-min" type="number" min="0" max="120" value="0" />
           </label>
           <label data-i18n="delay_max">Delay max (s)
-            <input id="delay-max" type="number" min="3" max="180" value="2" />
+            <input id="delay-max" type="number" min="0" max="180" value="0" />
           </label>
         </div>
         <div class="row">
@@ -97,12 +97,12 @@
           </label>
           <label data-i18n="stabilization">Stabilization (s) <span class="hint" data-i18n="stabilization_hint">price
               fixed for N s before accepting</span>
-            <input id="stable-secs" type="number" min="1" max="60" value="1" />
+            <input id="stable-secs" type="number" min="0" max="60" value="0" />
           </label>
         </div>
         <label data-i18n="confirms">Price confirmations <span class="hint" data-i18n="confirms_hint">jump after N equal
             readings (lower = faster, riskier)</span>
-          <input id="confirms" type="number" min="1" max="10" value="3" />
+          <input id="confirms" type="number" min="1" max="10" value="1" />
         </label>
         <label class="check"><input id="keep-tabs" type="checkbox" /> <span data-i18n="keep_tabs">keep tabs
             open</span></label>

@@ -90,11 +90,11 @@
   }
 
   // ---- push loop: monitorizar até estabilizar, depois empurrar ----
-  let stableMs = 4000;
+  let stableMs = 0;
   try {
     chrome.storage.local.get('savedForm').then((r) => {
       const s = parseInt(r?.savedForm?.['stable-secs'], 10);
-      if (s >= 1) stableMs = s * 1000;
+      if (s >= 0) stableMs = s * 1000;
     }).catch(() => {});
   } catch { /* sem storage */ }
 
@@ -109,7 +109,7 @@
   // otimista inicial (que muda entre leituras) mas salta muito mais cedo.
   // `stableMs` continua a valer como TETO de segurança: se o preço nunca
   // confirmar (oscila sempre), empurra o último ao fim de stableMs.
-  let confirmsNeeded = 3;
+  let confirmsNeeded = 1;
   try {
     chrome.storage.local.get('savedForm').then((r) => {
       const c = parseInt(r?.savedForm?.['confirms'], 10);

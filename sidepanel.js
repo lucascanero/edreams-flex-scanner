@@ -71,6 +71,7 @@ const t = (key, ...args) => {
 function applyLang(lang) {
   LANG = I18N[lang] ? lang : 'en';
   document.documentElement.lang = LANG;
+  syncDomainForLang(LANG);
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.dataset.i18n;
     const str = I18N[LANG][key];
@@ -84,6 +85,12 @@ function applyLang(lang) {
   updateComboCount();
   if (typeof renderResults === 'function' && S.results.length) renderResults();
   renderHistory();
+}
+
+function syncDomainForLang(lang) {
+  const el = $('domain');
+  if (!el) return;
+  el.value = lang === 'pt' ? 'www.edreams.pt' : 'www.edreams.com';
 }
 
 // ---------------------------------------------------------------- constantes
@@ -142,10 +149,10 @@ function readSettings() {
     nightsMax: parseInt($('nights-max').value, 10),
     domain: $('domain').value,
     template: $('url-template').value.trim() || DEFAULT_TEMPLATE,
-    delayMin: Math.max(3, parseInt($('delay-min').value, 10) || 8),
-    delayMax: Math.max(4, parseInt($('delay-max').value, 10) || 15),
+    delayMin: Math.max(0, parseInt($('delay-min').value, 10) || 0),
+    delayMax: Math.max(0, parseInt($('delay-max').value, 10) || 0),
     hardTimeout: (parseInt($('hard-timeout').value, 10) || 60) * 1000,
-    stableMs: Math.max(1000, (parseInt($('stable-secs').value, 10) || 5) * 1000),
+    stableMs: Math.max(0, (parseInt($('stable-secs').value, 10) || 0) * 1000),
     keepTabs: $('keep-tabs').checked,
     priceFloor: Math.max(0, parseInt($('price-floor').value, 10) || 0),
     adults: Math.max(1, parseInt($('pax-adults').value, 10) || 1),
@@ -553,7 +560,9 @@ async function restore() {
     const loc = LANG === 'pt' ? 'pt-PT' : 'en-GB';
     $('results-meta').textContent += ` · ${new Date(lastScan.ts).toLocaleString(loc)}`;
   }
+  syncDomainForLang(initialLang);
   updateComboCount();
+  saveForm();
 }
 
 function saveForm() {
@@ -652,6 +661,7 @@ $('lang-select').addEventListener('change', (e) => {
   const lang = e.target.value;
   chrome.storage.local.set({ lang });
   applyLang(lang);
+  saveForm();
 });
 
 // Versão a partir do manifest — fonte única de verdade, sem hardcode duplo.
