@@ -64,21 +64,13 @@ Not yet published. The store listing is pending; until then, use the
 
 ## First run
 
-The URL template and the page structure aren't guaranteed, so the first scan
-may need a quick check:
-
 1. Fill in origin, destination, and one date, then click **Search**.
-2. If the tab opens the correct results page, you're set. If not, run a manual
-   search on eDreams, copy the URL, and adapt the **URL template** under
-   *Advanced* using the tokens `{domain} {from} {to} {dep} {ret} {pax}`.
-3. Check that the price in the table matches the site's *Cheapest* tab. The
-   *source* column (hover the price) tells you which strategy was used.
+2. If the tab opens the correct results page, you're set. 
 
 ## How it works
 
 | File            | World    | Role |
 |-----------------|----------|------|
-| `interceptor.js`| MAIN     | Patches `fetch`/`XHR`; scores response lists to find itineraries; excludes the flexible-date matrix and Prime subscriptions. |
 | `content.js`    | ISOLATED | Reads the *Cheapest* tab from the page, pushes the stabilised price to the panel, detects anti-bot pages. |
 | `sidepanel.js`  | Panel    | Builds the queue, runs it sequentially with delays, renders results, ETA, history, CSV. |
 | `background.js` | SW       | Opens the side panel on icon click. |
