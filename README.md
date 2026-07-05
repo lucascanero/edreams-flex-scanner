@@ -2,13 +2,13 @@
 
 **Find the cheapest flights across a flexible range of dates on eDreams.**
 
-A Chrome extension (Manifest V3) that sweeps every departure/return combination
+A Chrome extension that sweeps every departure/return combination
 over a date range × nights range, opens each search in a real browser tab,
 reads the "Cheapest" price straight from the page, and ranks the results in a
 sortable table — with per-scan history and CSV export.
 
 <p align="center">
-  <img src="docs/screenshot.png" alt="eDreams Flex Scanner side panel" width="380">
+  <img src="docs//img/screenshot1.png" alt="eDreams Flex Scanner side panel">
 </p>
 
 
@@ -50,6 +50,10 @@ browser session.
 
 ## Install
 
+### Chrome Web Store
+
+[<img src="docs/img/chrome.png" alt="for Chrome" height="60px">](https://chromewebstore.google.com/detail/edreams-flex-scanner/fpoclmpdbkkjehijinokcdfcekdklpdp)
+
 ### From source
 
 1. Download or clone this repository.
@@ -57,11 +61,6 @@ browser session.
 3. Click **Load unpacked** and select the project folder.
 4. Click the extension icon to open the side panel.
    
-### Chrome Web Store
-
-Not yet published. The store listing is pending; until then, use the
-*from source* method above.
-
 ## First run
 
 1. Fill in origin, destination, and one date, then click **Search**.
