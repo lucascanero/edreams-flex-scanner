@@ -231,7 +231,7 @@
 <header class="hero">
   <div class="wrap">
     <div class="eyebrow">Chrome extension · Manifest V3</div>
-    <h1>Every date. <span class="thin">One board.</span> The cheapest flight.</h1>
+    <h1>Every date. <span class="thin">One search.</span> The cheapest flight.</h1>
     <p class="lead">
       Give it a departure window and a range of nights. It sweeps every
       round-trip combination on eDreams, reads the price off each page, and
@@ -350,7 +350,7 @@
     <div class="install-box">
       <div class="install-grid">
         <div class="install-col">
-          <h3>From source — works today</h3>
+          <h3>From source</h3>
           <ol class="steps">
             <li>Download the repo from <a href="https://github.com/lucascanero/edreams-flex-scanner" style="color:var(--amber);text-decoration:none">GitHub</a>.</li>
             <li>Open <code>chrome://extensions</code> and enable Developer mode.</li>
@@ -358,14 +358,12 @@
             <li>Click the icon to open the side panel.</li>
           </ol>
         </div>
-        <div class="install-col soon">
-          <h3>Chrome Web Store <span class="soon-badge">soon</span></h3>
+        <div class="install-col">
+          <h3>Chrome Web Store <span class="soon-badge">available</span></h3>
           <p>
-            The store listing is pending review. Until it's live, the
-            <em>from source</em> method on the left is the way in — it takes
-            about a minute and gives you the same extension.
+            The store extension is live! Just click the button below to install it.
           </p>
-          <a class="btn btn-ghost" href="https://github.com/lucascanero/edreams-flex-scanner" style="margin-top:18px">Get it from GitHub</a>
+          <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/edreams-flex-scanner/fpoclmpdbkkjehijinokcdfcekdklpdp" style="margin-top:18px">Get it from Web Store</a>
         </div>
       </div>
     </div>
@@ -388,9 +386,7 @@
 </footer>
 
 <script>
-  // When the extension is published, set this to the Web Store URL and the
-  // hero button + install column flip to a live "Add to Chrome" automatically.
-  const STORE_URL = ""; // e.g. "https://chromewebstore.google.com/detail/…"
+  const STORE_URL = "https://chromewebstore.google.com/detail/edreams-flex-scanner/fpoclmpdbkkjehijinokcdfcekdklpdp";
   if (STORE_URL) {
     const btn = document.getElementById("store-btn");
     btn.href = STORE_URL;
